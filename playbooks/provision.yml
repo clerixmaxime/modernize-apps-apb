@@ -1,0 +1,260 @@
+- name: cloud-native-workshop-apb playbook to provision the application
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  vars:
+    openshift_user: 
+    openshift_password: 
+    openshift_token:
+    openshift_master_url: 
+    openshift_user_password:
+    project_suffix: "-XX"
+    git_repository_guide_path: clerixmaxime/modernize-apps-guides
+    git_repository_guide_reference: master
+    gogs_dev_user: developer
+    gogs_pwd: openshift
+    infrasvcs_adm_user: adminuser
+    infrasvcs_adm_pwd: adminpwd
+    openshift_service_mesh_installation: false
+    local_kiali_installation: false
+
+  roles:
+  - role: ansible.kubernetes-modules
+    install_python_requirements: no
+  - role: ansibleplaybookbundle.asb-modules
+
+  tasks:    
+  - name: login as super user with token
+    shell: "oc login --token={{ openshift_token }} --insecure-skip-tls-verify=true"
+    when:
+      - openshift_token is defined
+      - openshift_token is not none
+      - openshift_token|trim() != ""
+    tags: always
+
+  - name: login as super user with pwd
+    shell: "oc login -u {{ openshift_user }} -p {{ openshift_password }} --insecure-skip-tls-verify=true"
+    when: >
+      openshift_token is not defined or
+      openshift_token is none or
+      openshift_token|trim() == ""
+    tags: always  
+          
+  - name: extract app route suffix
+    block:
+      - openshift_v1_route:
+          name: dummy
+          namespace: "{{ namespace }}"
+          state: present
+          spec_to_kind: Service
+          spec_to_name: dummy
+          spec_port_target_port: 8080
+        register: dummy_route
+      - set_fact:
+          apps_hostname_suffix: "{{ dummy_route.route.spec.host|regex_replace('^dummy-' + namespace + '\\.(.*)$', '\\1') }}"
+      - openshift_v1_route:
+          name: dummy
+          namespace: "{{ namespace }}"
+          state: absent
+    tags: always
+
+  - name: delete project quota
+    shell: "oc delete limitrange --all -n {{ namespace }}"
+    ignore_errors: true
+    tags: always
+
+  - import_role:
+      name: openshift_sonatype_nexus
+    vars:
+      project_name: "{{ namespace }}"
+      nexus_image_version: 3.12.1
+      nexus_max_memory: 6Gi
+    tags: nexus
+
+  - import_role:
+      name: openshift_gogs
+    vars:
+      project_name: "{{ namespace }}"
+      gogs_route: "gogs-{{ namespace }}.{{ apps_hostname_suffix }}"
+      gogs_image_version: 0.11.34
+      gogs_admin_user: "{{ infrasvcs_adm_user }}"
+      gogs_admin_password: "{{ infrasvcs_adm_pwd }}"
+      gogs_user: "{{ gogs_dev_user }}"
+      gogs_password: "{{ gogs_pwd }}"
+    tags: gogs
+
+  # deploy guides
+  - import_role:
+      name: openshift_workshopper
+      allow_duplicates: true
+    vars:
+      workshopper_name: modernize-apps
+      project_name: "{{ namespace }}"
+      workshopper_content_url_prefix: "https://raw.githubusercontent.com/{{ git_repository_guide_path }}/{{ git_repository_guide_reference }}"
+      workshopper_workshop_urls: "https://raw.githubusercontent.com/{{ git_repository_guide_path }}/{{ git_repository_guide_reference }}/_mono-2-micro-che.yml"
+      workshopper_env_vars:
+        PROJECT_SUFFIX: "{{ project_suffix }}"
+        COOLSTORE_PROJECT: coolstore{{ project_suffix }}
+        OPENSHIFT_CONSOLE_URL: "{{ openshift_master_url }}"
+        ECLIPSE_CHE_URL: http://codeready-{{ namespace }}.{{ apps_hostname_suffix }}
+        GIT_URL: http://gogs-{{ namespace }}.{{ apps_hostname_suffix }}
+        NEXUS_URL: http://nexus-{{ namespace }}.{{ apps_hostname_suffix }}
+    tags: guides
+
+  # install openjdk imagestream
+  - name: get openjdk image stream
+    shell: "oc get is java -n openshift"
+    register: java_imagestream_result
+    ignore_errors: true
+    tags: jdk
+
+  - name: install java image stream
+    shell: "oc apply -n openshift -f https://raw.githubusercontent.com/jboss-openshift/application-templates/master/openjdk/openjdk18-image-stream.json"
+    when: java_imagestream_result is failed
+    tags: jdk
+
+  # install CodeReady Workspaces
+  - import_role:
+      name: openshift_codeready_workspaces
+    vars:
+      project_name: "{{ namespace }}"
+    tags: codeready-workspaces
+  
+  - name: get CodeReady Workspaces URL
+    command: "oc get routes codeready --template={% raw %}'{{ .spec.host }}'{% endraw %} -n {{ namespace }}"
+    register: cmd_result
+    changed_when: true
+
+  - name: init 'codeready_url' variable
+    set_fact:
+      codeready_url: "{{ cmd_result.stdout }}"
+
+  - name: get RHSSO URL
+    command: "oc get routes keycloak --template={% raw %}'{{ .spec.host }}'{% endraw %} -n {{ namespace }}"
+    register: cmd_result
+    changed_when: true
+
+  - name: init 'rhsso_url' variable
+    set_fact:
+      rhsso_url: "{{ cmd_result.stdout }}"
+
+  - name: wait for CodeReady Workspaces to be running
+    uri:
+      url: "http://{{ codeready_url }}/api/system/state"
+      status_code: 200
+    register: result
+    until: result.status == 200
+    retries: 60
+    delay: 30
+
+  - name: get auth token from RHSSO CodeReady realm
+    uri:
+      url: http://{{ rhsso_url }}/auth/realms/codeready/protocol/openid-connect/token
+      method: POST
+      body: "username=admin&password=admin&grant_type=password&client_id=admin-cli"
+      status_code: 200
+      headers:
+        Content-Type: "application/x-www-form-urlencoded"
+    register: codeready_access_token_result
+
+  - name: init 'codeready_access_token_bearer' variable
+    set_fact:
+      codeready_access_token_bearer: "{{ codeready_access_token_result.json | json_query('access_token') }}"
+  
+  - name: add the cloud native stack
+    uri:
+      url: "http://{{ codeready_url }}/api/stack"
+      method: POST
+      body: "{{ lookup('template','cloud-native-stack.json.j2', convert_data=False) }}"
+      status_code: 201
+      body_format: json
+      headers:
+        Authorization: "Bearer {{ codeready_access_token_bearer }}"
+    register: stack_json_result
+
+  - name: init 'stack_id' variable
+    set_fact:
+      stack_id: "{{ stack_json_result.json|json_query('id') }}"
+
+  - name: give all users access to the stack
+    uri:
+      url: "http://{{ codeready_url }}/api/permissions"
+      method: POST
+      body: "{{ lookup('template','stack-permissions.json.j2', convert_data=False) }}"
+      status_code: 204
+      body_format: json
+      headers:
+        Authorization: "Bearer {{ codeready_access_token_bearer }}"
+    vars:
+      stack_id: "{{ stack_id }}"
+
+  # - name: check if istio-system project exists
+  #   command: "oc get project istio-system"
+  #   register: istio_system_project_result
+  #   ignore_errors: true
+  #   changed_when: false
+
+  # install Local Kiali for 100 users
+  # - name: Local Kiali Installation
+  #   block:
+  #     - name: get Jaeger URL
+  #       command: "oc get route jaeger-query --template={% raw %}'{{ .spec.host }}'{% endraw %} -n istio-system"
+  #       register: cmd_result
+  #       changed_when: true
+  #     - name: init 'jaeger_url' variable
+  #       set_fact:
+  #         jaeger_url: "{{ cmd_result.stdout }}"
+  #     - name: get Grafana URL
+  #       command: "oc get route grafana --template={% raw %}'{{ .spec.host }}'{% endraw %} -n istio-system"
+  #       register: cmd_result
+  #       changed_when: true
+  #     - name: init 'grafana_url' variable
+  #       set_fact:
+  #         grafana_url: "{{ cmd_result.stdout }}"
+  #     - name: deploy kiali
+  #       block:
+  #         - name: check if {{ infra_project_name }} project exists
+  #           command: "oc get project {{ infra_project_name }}"
+  #           register: project_result
+  #           ignore_errors: true
+  #           changed_when: false
+  #         - name: create {{ infra_project_name }} project
+  #           command: >
+  #               oc new-project {{ infra_project_name }}
+  #           when: project_result is failed
+  #         - name: Change Project
+  #           command: "oc project {{ infra_project_name }}"
+  #           changed_when: true
+  #         - name: install kiali
+  #           command: "bash <(curl -L http://git.io/getLatestKiali)"
+  #           register: cmd_result
+  #           changed_when: true
+  #         - name: grant {{ username }} to view the project {{ infra_project_name }}
+  #           command: "oc adm policy add-role-to-user view {{ username }} -n {{ infra_project_name }}"
+  #           register: cmd_result
+  #           changed_when: true
+  #         - name: remove the cluster-wide permissions to Kiali
+  #           command: "oc delete clusterrolebindings kiali -n {{ infra_project_name }}"
+  #           register: cmd_result
+  #           changed_when: true
+  #         - name: reducing permissions to {{ coolstore_project_name }} only
+  #           command: >
+  #             oc adm policy add-role-to-user kiali 
+  #             system:serviceaccount:{{ infra_project_name }}:kiali-service-account 
+  #             -n {{ coolstore_project_name }}
+  #           register: cmd_result
+  #           changed_when: true
+  #       environment:
+  #         - NAMESPACE: "{{ infra_project_name }}"
+  #         - JAEGER_URL: "{{ jaeger_url }}"
+  #         - GRAFANA_URL: "{{ grafana_url }}"
+  #         - KIALI_USERNAME: "{{ username }}"
+  #         - KIALI_PASSPHRASE: "{{ openshift_user_password }}"
+  #       vars:
+  #         username: "{{ item }}"
+  #         infra_project_name: "infra-{{ item }}"
+  #         coolstore_project_name: "coolstore-{{ item }}"
+  #       with_sequence: start=1 end=100 format="user%d"
+  #   when: 
+  #     - local_kiali_installation
+  #     - istio_system_project_result is suceeded

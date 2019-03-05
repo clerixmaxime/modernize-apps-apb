@@ -1,0 +1,88 @@
+version: '1.0.0'
+name: modernize-apps-workshop-apb
+description: APB to deploy required infra components for Application Modernization Workshop on an OpenShift cluster
+bindable: False
+async: optional
+tags:
+- workshop
+- modernize-apps
+metadata:
+  dependencies: []
+  displayName: "Application Modernization Workshop (CodeReady) Installer"
+  longDescription: "Required components (CodeReady Workspaces, Nexus, Gogs, Workshopper)"
+  console.openshift.io/iconClass: "pficon pficon-services"
+  providerDisplayName: "Red Hat, Inc."
+plans:
+  - name: default
+    description: This default plan deploys modernize-apps-workshop
+    free: True
+    metadata: {}
+    parameters:
+    - name: openshift_user
+      title: Username
+      description: User is required for creating project admin resources
+      type: string
+      required: true
+      display_group: OpenShift Master
+    - name: openshift_password
+      title: Password
+      description: Password is required for creating project admin resources
+      type: string
+      required: true
+      display_type: password
+      display_group: OpenShift Master
+    - name: openshift_master_url
+      title: OpenShift Master URL
+      description: The address to OpenShift master URL to be displayed in the lab guide to participants
+      type: string
+      required: true
+      display_type: string
+      display_group: OpenShift Master
+    - name: openshift_user_password
+      title: OpenShift User Password
+      description: The OpenShift password for participants to be displayed in the lab guide to participants
+      type: string
+      default: "openshift"
+      required: true
+      display_type: string
+      display_group: Lab Guide
+    - name: git_repository_guide_path
+      title: Git Repository Guide Path
+      description: The Path of the repository with the lab guide for participants <github_account>/<github_project>
+      type: string
+      default: "openshift-labs/cloud-native-guides"
+      required: true
+      display_type: string
+      display_group: Lab Guide
+    - name: git_repository_guide_reference
+      title: Git Repository Guide Reference
+      description: Set this to a branch name, tag or other ref of your repository if you are not using the default branch.
+      type: string
+      default: "ocp-3.11"
+      required: true
+      display_type: string
+      display_group: Lab Guide
+    - name: local_kiali_installation
+      title: Local Kiali Installation (Only for Openshift Workshop on RHPDS)
+      description: Set this to install Kiali for 'user1-100' (Service Mesh Required)
+      type: boolean
+      default: false
+      required: true
+      display_type: checkbox
+      display_group: Openshift Service Mesh
+    - name: infrasvcs_adm_user
+      title: Infra Services Admin User
+      description: Admin user for infrastructure services (Gogs, Nexus, ...)
+      type: string
+      default: "adminuser"
+      required: true
+      display_type: text
+      display_group: Workshop Infra Services
+    - name: infrasvcs_adm_pwd
+      title: Infra Services Admin Password
+      description: Admin password for infrastructure services (Gogs, Nexus, ...)
+      type: string
+      default: "adminpwd"
+      required: true
+      display_type: text
+      display_group: Workshop Infra Services

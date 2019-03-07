@@ -63,6 +63,12 @@
     ignore_errors: true
     tags: always
 
+  - name: add eap template
+    shell: |
+        oc create -n openshift -f https://raw.githubusercontent.com/openshift/openshift-ansible/release-3.9/roles/openshift_examples/files/examples/v3.9/xpaas-streams/jboss-image-streams.json
+        oc create -n openshift -f https://raw.githubusercontent.com/clerixmaxime/modernize-apps-apb/master/templates/template-binary.json
+        oc create -n openshift -f https://raw.githubusercontent.com/clerixmaxime/modernize-apps-apb/master/templates/template-prod.json
+
   - import_role:
       name: openshift_sonatype_nexus
     vars:

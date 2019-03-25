@@ -9,8 +9,8 @@ by deploying required services (lab instructions, Gogs, Nexus, etc).
 NOTE: This source code in this repo are used to build the following APB container images in quay.io
 
 ```bash
-$ oc import-image modernize-apps-workshop-apb \
---from=quay.io/mclerix/modernize-apps-workshop-apb \
+$ oc import-image modernize-apps-apb \
+--from=quay.io/mclerix/modernize-apps-apb \
 --confirm -n openshift
 ```
 
@@ -39,10 +39,18 @@ RUN chmod -R g=u /opt/{ansible,apb}
 USER apb
 ```
 
+Build the image
+
+```bash
+docker build -t quay.io/mclerix/modernize-apps-apb:latest .
+```
+
 ## Building and Deploying on Openshift
+
 ```bash
 $ oc new-build https://github.com/clerixmaxime/modernize-apps-workshop-apb \
     --name=modernize-apps-workshop-apb \
+    --strategy=docker \
     -n openshift
 ```
 

@@ -19,7 +19,7 @@ $ oc import-image modernize-apps-workshop-apb \
 ## Preparing (Only if you change the apb.yml file)
 First update the `com.redhat.apb.spec` LABEL from the Dockerfile file with a base64 encoded version of apb.yml
 ```bash
-$ git clone https://github.com/<your username>/modernize-apps-workshop-apb.git
+$ git clone https://github.com/clerixmaxime/modernize-apps-workshop-apb.git
 $ cd modernize-apps-workshop-apb
 $ sed -i '.bak' "s/LABEL \"com.redhat.apb.spec\"=.*/LABEL \"com.redhat.apb.spec\"=\"$(cat apb.yml | base64)\"/g" Dockerfile
 $ git commit
@@ -41,7 +41,7 @@ USER apb
 
 ## Building and Deploying on Openshift
 ```bash
-$ oc new-build https://github.com/<your username>/modernize-apps-workshop-apb \
+$ oc new-build https://github.com/clerixmaxime/modernize-apps-workshop-apb \
     --name=modernize-apps-workshop-apb \
     -n openshift
 ```

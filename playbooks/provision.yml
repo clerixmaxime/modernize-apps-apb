@@ -65,9 +65,10 @@
 
   - name: add eap template
     shell: |
-        oc create -n openshift -f https://raw.githubusercontent.com/openshift/openshift-ansible/release-3.9/roles/openshift_examples/files/examples/v3.9/xpaas-streams/jboss-image-streams.json
+        oc create -n openshift -f https://raw.githubusercontent.com/openshift/openshift-ansible/release-3.11/roles/openshift_examples/files/examples/x86_64/xpaas-streams/eap71-image-stream.json
         oc create -n openshift -f https://raw.githubusercontent.com/clerixmaxime/modernize-apps-apb/master/templates/template-binary.json
         oc create -n openshift -f https://raw.githubusercontent.com/clerixmaxime/modernize-apps-apb/master/templates/template-prod.json
+    ignore_errors: True
 
   - import_role:
       name: openshift_sonatype_nexus
@@ -171,7 +172,7 @@
     uri:
       url: "http://{{ codeready_url }}/api/stack"
       method: POST
-      body: "{{ lookup('template','cloud-native-stack.json.j2', convert_data=False) }}"
+      body: "{{ lookup('template','../templates/modernize-apps-stack.json.j2', convert_data=False) }}"
       status_code: 201
       body_format: json
       headers:
@@ -186,7 +187,7 @@
     uri:
       url: "http://{{ codeready_url }}/api/permissions"
       method: POST
-      body: "{{ lookup('template','stack-permissions.json.j2', convert_data=False) }}"
+      body: "{{ lookup('template','../templates/stack-permissions.json.j2', convert_data=False) }}"
       status_code: 204
       body_format: json
       headers:

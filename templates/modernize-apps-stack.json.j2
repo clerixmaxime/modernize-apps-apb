@@ -54,18 +54,104 @@
       }
     },
     "commands": [
-          "{\"commandLine\":\"mvn wildfly:run -f ${current.project.path}/pom.xml\", \"name\":\"run-eap\", \"attributes\":{\"goal\":\"Run\", \"previewUrl\":\"\"}, \"type\":\"custom\"}",
-          "{\"commandLine\":\"mvn wildfly:start wildfly:add-resource wildfly:shutdown -f ${current.project.path}/pom.xml\", \"name\":\"add-jms-resource\", \"attributes\":{\"goal\":\"Common\", \"previewUrl\":\"\"}, \"type\":\"custom\"}",
-          "{\"commandLine\":\"mvn clean package -f ${current.project.path}/pom.xml\", \"name\":\"build\", \"attributes\":{\"goal\":\"Build\", \"previewUrl\":\"\"}, \"type\":\"mvn\"}",
-          "{\"commandLine\":\"oc start-build coolstore --from-file=${current.project.path}/deployments/ROOT.war --follow\", \"name\":\"deploy-eap-openshift\", \"attributes\":{\"goal\":\"Deploy\", \"previewUrl\":\"\"}, \"type\":\"custom\"}",
-          "{\"commandLine\":\"export COOLSTORE_DEV_POD_NAME=$(oc get pods --selector deploymentconfig=coolstore -o jsonpath='{.items[?(@.status.phase==\\\"Running\\\")].metadata.name}')\\noc rsync ${current.project.path}/deployments/ $COOLSTORE_DEV_POD_NAME:/deployments --watch --no-perms &\", \"name\":\"sync-eap-openshift\", \"attributes\":{\"goal\":\"Common\", \"previewUrl\":\"\"}, \"type\":\"custom\"}",
-          "{\"commandLine\":\"mvn clean package -Popenshift -f ${current.project.path}/pom.xml\", \"name\":\"build-eap-openshift\", \"attributes\":{\"goal\":\"Build\", \"previewUrl\":\"\"}, \"type\":\"custom\"}",
-          "{\"commandLine\":\"cd ${current.project.path};\\nmvn wildfly-swarm:run\", \"name\":\"run-thorntail\", \"attributes\":{\"goal\":\"Run\", \"previewUrl\":\"${server.http/web8080}\"}, \"type\":\"mvn\"}",
-          "{\"commandLine\":\"cd ${current.project.path};\\nmvn spring-boot:run;\", \"name\":\"run-spring-boot\", \"attributes\":{\"goal\":\"Run\", \"previewUrl\":\"${server.http/web8081}\"}, \"type\":\"mvn\"}",
-          "{\"commandLine\":\"cd ${current.project.path};\\nmvn verify;\", \"name\":\"test-spring-boot\", \"attributes\":{\"goal\":\"Test\", \"previewUrl\":\"\"}, \"type\":\"mvn\"}",
-          "{\"commandLine\":\"cd ${current.project.path};\\nmvn compile vertx:run\", \"name\":\"build-vertx\", \"attributes\":{\"goal\":\"Build\", \"previewUrl\":\"\"}, \"type\":\"mvn\"}",
-          "{\"commandLine\":\"cd ${current.project.path};\\nmvn compile vertx:run\", \"name\":\"run-vertx\", \"attributes\":{\"goal\":\"Run\", \"previewUrl\":\"${server.http/web8082}\"}, \"type\":\"mvn\"}"
-        ],
+      {
+          "commandLine": "mvn wildfly:run -f ${current.project.path}/pom.xml",
+          "name": "run-eap", 
+          "attributes": {
+              "goal": "Run", 
+              "previewUrl": ""
+          }, 
+          "type": "custom"
+      },
+      {
+          "commandLine": "mvn wildfly:start wildfly:add-resource wildfly:shutdown -f ${current.project.path}/pom.xml",
+          "name": "add-jms-resource", 
+          "attributes": {
+              "goal": "Common",
+              "previewUrl": ""
+          }, 
+          "type": "custom"
+      },
+      {
+          "commandLine": "mvn clean package -f ${current.project.path}/pom.xml", 
+          "name": "build", 
+          "attributes": {
+              "goal": "Build", 
+              "previewUrl": ""
+          }, 
+          "type": "mvn"
+      },
+      {
+          "commandLine": "oc start-build coolstore --from-file=${current.project.path}/deployments/ROOT.war --follow", 
+          "name": "deploy-eap-openshift", 
+          "attributes": {
+              "goal": "Deploy", 
+              "previewUrl": ""
+          }, 
+          "type": "custom"
+      },
+      {
+          "commandLine": "export COOLSTORE_DEV_POD_NAME=$(oc get pods --selector deploymentconfig=coolstore -o jsonpath='{.items[?(@.status.phase==\"Running\")].metadata.name}')noc rsync ${current.project.path}/deployments/ $COOLSTORE_DEV_POD_NAME:/deployments --watch --no-perms &", 
+          "name": "sync-eap-openshift", 
+          "attributes": {
+              "goal": "Common",
+              "previewUrl": ""
+          }, "type": "custom"
+      },
+      {
+          "commandLine": "mvn clean package -Popenshift -f ${current.project.path}/pom.xml", 
+          "name": "build-eap-openshift", 
+          "attributes": {
+              "goal": "Build", 
+              "previewUrl": ""
+          }, "type": "custom"
+      },
+      {
+          "commandLine": "cd ${current.project.path};nmvn wildfly-swarm:run", 
+          "name": "run-thorntail", 
+          "attributes": {
+              "goal": "Run", 
+              "previewUrl": "${server.http/web8080}"
+          }, 
+          "type": "mvn"
+      },
+      {
+          "commandLine": "cd ${current.project.path};nmvn spring-boot:run;", 
+          "name": "run-spring-boot", 
+          "attributes": {
+              "goal": "Run", 
+              "previewUrl": "${server.http/web8081}"
+          }, 
+          "type": "mvn"
+      },
+      {
+          "commandLine": "cd ${current.project.path};nmvn verify;", 
+          "name": "test-spring-boot", 
+          "attributes": {
+              "goal": "Test", 
+              "previewUrl": ""
+          }, 
+          "type": "mvn"
+      },
+      {
+          "commandLine": "cd ${current.project.path};nmvn compile vertx:run", 
+          "name": "build-vertx", 
+          "attributes": {
+              "goal": "Build", 
+              "previewUrl": ""
+          }, 
+          "type": "mvn"
+      },
+      {
+          "commandLine": "cd ${current.project.path};nmvn compile vertx:run", 
+          "name": "run-vertx", 
+          "attributes": {
+              "goal": "Run", 
+              "previewUrl": "${server.http/web8082}"
+          }, 
+          "type": "mvn"
+      }
+    ],
     "projects": [],
     "defaultEnv": "default",
     "name": "default",
@@ -97,7 +183,7 @@
       "name": "OpenShift DO"
     }
   ],
-  "creator": "mclerix",
+  "creator": "ide",
   "tags": [
     "Java",
     "JDK",

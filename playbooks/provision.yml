@@ -106,7 +106,7 @@
         ECLIPSE_CHE_URL: http://codeready-{{ namespace }}.{{ apps_hostname_suffix }}
         GIT_URL: http://gogs-{{ namespace }}.{{ apps_hostname_suffix }}
         NEXUS_URL: http://nexus-{{ namespace }}.{{ apps_hostname_suffix }}
-        ROUTE_SUFFIX: {{ apps_hostname_suffix }}
+        ROUTE_SUFFIX: "{{ apps_hostname_suffix }}"
     tags: guides
 
   # install openjdk imagestream

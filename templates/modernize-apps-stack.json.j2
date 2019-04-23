@@ -107,7 +107,7 @@
           }, "type": "custom"
       },
       {
-          "commandLine": "cd ${current.project.path};nmvn wildfly-swarm:run", 
+          "commandLine": "cd ${current.project.path} && mvn wildfly-swarm:run", 
           "name": "run-thorntail", 
           "attributes": {
               "goal": "Run", 
@@ -116,7 +116,7 @@
           "type": "mvn"
       },
       {
-          "commandLine": "cd ${current.project.path};nmvn spring-boot:run;", 
+          "commandLine": "cd ${current.project.path} && mvn spring-boot:run;", 
           "name": "run-spring-boot", 
           "attributes": {
               "goal": "Run", 
@@ -125,7 +125,7 @@
           "type": "mvn"
       },
       {
-          "commandLine": "cd ${current.project.path};nmvn verify;", 
+          "commandLine": "cd ${current.project.path} && mvn verify;", 
           "name": "test-spring-boot", 
           "attributes": {
               "goal": "Test", 
@@ -134,7 +134,7 @@
           "type": "mvn"
       },
       {
-          "commandLine": "cd ${current.project.path};nmvn compile vertx:run", 
+          "commandLine": "cd ${current.project.path} && mvn compile vertx:run", 
           "name": "build-vertx", 
           "attributes": {
               "goal": "Build", 
@@ -143,7 +143,7 @@
           "type": "mvn"
       },
       {
-          "commandLine": "cd ${current.project.path};nmvn compile vertx:run", 
+          "commandLine": "cd ${current.project.path} && mvn compile vertx:run", 
           "name": "run-vertx", 
           "attributes": {
               "goal": "Run", 

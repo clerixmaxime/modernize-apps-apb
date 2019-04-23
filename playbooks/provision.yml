@@ -107,6 +107,7 @@
         GIT_URL: http://gogs-{{ namespace }}.{{ apps_hostname_suffix }}
         NEXUS_URL: http://nexus-{{ namespace }}.{{ apps_hostname_suffix }}
         ROUTE_SUFFIX: "{{ apps_hostname_suffix }}"
+        ISSUES_URL: https://github.com/clerixmaxime/modernize-apps-guides/issues
     tags: guides
 
   # install openjdk imagestream

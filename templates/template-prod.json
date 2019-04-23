@@ -577,21 +577,6 @@
             ]
         },
         {
-            "kind": "RoleBinding",
-            "apiVersion": "v1",
-            "groupNames": null,
-            "metadata": {
-                "name": "coolstore-prod-serviceaccount_view"
-            },
-            "roleRef": {
-                "name": "view"
-            },
-            "subjects": [{
-                "kind": "ServiceAccount",
-                "name": "coolstore-prod-serviceaccount"
-            }]
-        },
-        {
             "kind": "Secret",
             "apiVersion": "v1",
             "metadata": {
